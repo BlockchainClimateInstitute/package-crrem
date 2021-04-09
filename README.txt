@@ -1,0 +1,1 @@
+This is a climate value at risk model for real estate asset in the UK. 

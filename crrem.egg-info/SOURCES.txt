@@ -1,0 +1,13 @@
+CHANGELOG.txt
+LICENSE.txt
+MANIFEST.in
+README.txt
+setup.py
+crrem/__init__.py
+crrem/database.py
+crrem/var.py
+crrem.egg-info/PKG-INFO
+crrem.egg-info/SOURCES.txt
+crrem.egg-info/dependency_links.txt
+crrem.egg-info/requires.txt
+crrem.egg-info/top_level.txt

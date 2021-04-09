@@ -1,0 +1,23 @@
+Metadata-Version: 1.1
+Name: crrem
+Version: 0.0.3
+Summary: A climate value at risk calculator
+Home-page: UNKNOWN
+Author: Rupert Xu
+Author-email: rupert.xu@blockchainclimate.org
+License: MIT
+Description: This is a climate value at risk model for real estate asset in the UK. 
+        
+        Change Log
+        ============
+        
+        0.0.1 (31/03/2021)
+        ------------------
+        -First Release
+Keywords: climate value at risk
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: Operating System :: Microsoft :: Windows :: Windows 10
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
