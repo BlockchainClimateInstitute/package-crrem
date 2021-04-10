@@ -3,11 +3,9 @@ import numpy as np
 from crrem.database import DataQ
 
 # impport raw data from database
-years = list(range(2018, 2051))
 target_level = DataQ("select * from crrem.target_levels").data
 target_type = DataQ("select * from crrem.target_type").data
-property_use_type = DataQ("select * from crrem.property_use_type").data
-property_use_type_factor = DataQ("select * from crrem.property_use_type_factor").data
+property_type = DataQ("select * from crrem.vw_epc_to_crrem_prop_type").data
 country = DataQ("select * from crrem.country").data
 country_factor = DataQ("select * from crrem.country_factor").data
 currency = DataQ("select * from crrem.currency").data
@@ -20,21 +18,16 @@ price['price'] = price['price'].astype(float)
 scenario_gw = DataQ("select * from crrem.scenario_gw").data
 zip_nuts = DataQ("select * from crrem.zip_to_nuts").data
 zip_nuts.set_index('zip_code', inplace=True)
-nuts_classification = DataQ("select * from crrem.nuts_classification").data
 energy_use_type = DataQ("select * from crrem.energy_use_type").data
 energy_use_breakdown = DataQ("select * from crrem.energy_use_breakdown").data
 hdd_cdd_by_nuts = DataQ("select * from crrem.hdd_cdd_by_nuts").data
 hdd_cdd_by_nuts.set_index('nuts_code', inplace=True)
 
 
-def VAR(building_id, target_temp, RCP_scenario):
+def VAR(building_id=None, target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, property_price=500000):
     i = building_id
     epc = DataQ(f"""select * from public.epcsourcedata where "BUILDING_REFERENCE_NUMBER" = {i} """).data
     epc = epc.set_index('BUILDING_REFERENCE_NUMBER')
-
-    # other function parameters
-    discount_factor = 0.02
-    property_price = 500000
 
     if target_temp == 1.5:
         gw_scenario_id = 1
@@ -43,12 +36,7 @@ def VAR(building_id, target_temp, RCP_scenario):
 
     # 1.Data preparation GHG emission target
     # find property type id
-    if epc['PROPERTY_TYPE'].iloc[0] in {"Bungalow", "House", "Park Home"}:
-        property_type_code = 'RES'  # single-family
-    else:
-        property_type_code = 'RESM'  # multi-family
-    property_type_id = property_use_type[property_use_type['use_type_code'] == property_type_code]['use_type_id'].iloc[
-        0]
+    property_type_id = property_type.loc[property_type['epc_prop_type'] == epc['PROPERTY_TYPE'].iloc[0]]['prop_use_type_id'].iloc[0]
 
     # specify target based on property type/target type/scenario
     years = list(range(2018, 2051))
