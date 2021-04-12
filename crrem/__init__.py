@@ -1,2 +1,2 @@
-from crrem.var import VAR
 
+from crrem.var import Building, Portfolio
