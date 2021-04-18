@@ -37,34 +37,17 @@ class Building:
         self.emission_target = pd.Series(dtype=float)
         self.emission_baseline = pd.Series(dtype=float)
 
-    def Diagram(self, target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, end_year=2050):
-        
-        #plot diagram
-        years = list(range(2018,end_year+1))
-        plt.figure(figsize = (20,10))
-        plt.plot(self.emission_target, 'g', label = 'Decarbonisation emission_target')
-        plt.plot(self.emission, 'k', label = 'Climate and grid corrected asset performance')
-        plt.plot(self.emission_baseline, ':k', label = 'emission_baseline asset performance')
-        plt.plot(self.emission_baseline.iloc[[0]],'kD', markersize = 10, label = '2018 performance') 
-
-        #highlight stranding year
-        stranding = self.emission_target - self.emission
-        if (stranding<0).any():
-            stranding_year = stranding[stranding < 0].index[0]
-            plt.plot(self.emission[[stranding_year]], 'ro', markersize = 20, label = 'Stranding')
-
-        #Excess emissions
-        plt.fill_between(years, self.emission_target.tolist(), self.emission.tolist(), where = (self.emission_target < self.emission), color='C1', alpha=0.3, label = 'Excess emissions')
-        plt.legend(loc = 'best', fontsize = 12)
-
-        #set title and axis labels
-        plt.title(f'Stranding Diagram(Asset #{self.building_id})', fontsize = 25)
-        plt.xlabel('Year', fontsize = 15)
-        plt.ylabel('GHG intensity [kgCO2e/m²/a]', fontsize = 15)
-        plt.show()
+    #1. VAR 2. Stranding diagram 3. Portfolio (Number of stranding diagrams) 4. Add end year as argument
+class Building:
+ 
+    def __init__(self, building_id, property_price):
+        self.building_id = building_id
+        self.property_price = property_price
+        self.stranding_year = None
+        self.loss_vlaue = None
 
 
-    def VAR(self, target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, end_year=2050):
+    def VAR(self, target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, end_year=2050, Diagram=True):
         i = self.building_id
         epc = DataQ(f"""select * from public.epcsourcedata where "BUILDING_REFERENCE_NUMBER" = {i} """).data
         epc = epc.set_index('BUILDING_REFERENCE_NUMBER')
@@ -259,13 +242,37 @@ class Building:
 
         VAR = (sum(discount_costs) + sum(discount_value)) / self.property_price
         
-        self.loss_value = sum(discount_costs) + sum(discount_value)
-        self.emission = emission
-        self.emission_target = emission_target
-        self.emission_baseline = emission_baseline
         self.stranding_year = emission_stranding_year
+        self.loss_value = sum(discount_costs) + sum(discount_value)
+        #plot diagram
+        if Diagram == True:
+            years = list(range(2018,end_year+1))
+            plt.figure(figsize = (20,10))
+            plt.plot(emission_target, 'g', label = 'Decarbonisation emission_target')
+            plt.plot(emission, 'k', label = 'Climate and grid corrected asset performance')
+            plt.plot(emission_baseline, ':k', label = 'emission_baseline asset performance')
+            plt.plot(emission_baseline.iloc[[0]],'kD', markersize = 10, label = '2018 performance') 
+
+            #highlight stranding year
+            stranding = emission_target - emission
+            if (stranding<0).any():
+                stranding_year = stranding[stranding < 0].index[0]
+                plt.plot(emission[[stranding_year]], 'ro', markersize = 20, label = 'Stranding')
+
+            #Excess emissions
+            plt.fill_between(years, emission_target.tolist(), emission.tolist(), where = (emission_target < emission), color='C1', alpha=0.3, label = 'Excess emissions')
+            plt.legend(loc = 'best', fontsize = 12)
+
+            #set title and axis labels
+            plt.title(f'Stranding Diagram(Asset #{self.building_id})', fontsize = 25)
+            plt.xlabel('Year', fontsize = 15)
+            plt.ylabel('GHG intensity [kgCO2e/m²/a]', fontsize = 15)
+            plt.show()
+        
         return VAR
 
+# 1. attribute of the building_id
+# 2. method: plot (Number of stranding diagrams)
 
 class Portfolio:
 
@@ -275,26 +282,20 @@ class Portfolio:
     def add_building(self, building):
         self.buildings.append(building)
         
-    def VAR(self,target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, end_year=2050):
+    def VAR(self,target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, end_year=2050, Diagram=True):
         total_loss = 0
         total_price = 0
-        for building in self.buildings:
-            building.VAR(target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02)
-            total_loss += building.loss_value
-            total_price += building.property_price
-        return total_loss/total_price
-    
-    def Diagram(self,target_temp=1.5, RCP_scenario=4.5, discount_factor=0.02, end_year=2050):
         years = list(range(2018,end_year+1))
         strand_buildings = pd.Series(0, index=years)
-
-        # assumption 2: district heating/cooling and fugitive emission not considered
         for building in self.buildings:
-            building.VAR()
+            building.VAR(target_temp=target_temp, RCP_scenario=RCP_scenario, discount_factor=discount_factor, end_year=end_year, Diagram=False)
+            total_loss += building.loss_value
+            total_price += building.property_price
             strand_buildings[building.stranding_year] += 1
-        strand_buildings = strand_buildings.cummax()
-
-        plt.figure(figsize = (20,10))
-        plt.plot(strand_buildings, 'g')
-        plt.title('Number of stranding assets over time', fontsize=25)
-        plt.show()
+        if Diagram == True:
+            strand_buildings = strand_buildings.cummax()
+            plt.figure(figsize = (20,10))
+            plt.plot(strand_buildings, 'g', label = 'Decarbonisation emission_target')
+            plt.title('Number of stranding assets over time', fontsize=25)
+            plt.show()          
+        return total_loss/total_price

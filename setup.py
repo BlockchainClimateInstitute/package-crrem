@@ -10,7 +10,7 @@ classifiers = [
  
 setup(
   name='crrem',
-  version='0.1.2',
+  version='0.1.3',
   description='A climate value at risk calculator',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
   url='',  
