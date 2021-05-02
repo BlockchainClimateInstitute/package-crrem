@@ -10,10 +10,10 @@ classifiers = [
  
 setup(
   name='crrem',
-  version='0.1.3',
+  version='0.1.4',
   description='A climate value at risk calculator',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
-  url='',  
+  long_description_content_type='text/markdown',
   author='Rupert Xu',
   author_email='rupert.xu@blockchainclimate.org',
   license='MIT', 
