@@ -67,6 +67,9 @@ class Building:
         # HDD - HDD index
         RCP = 'RCP' + str(RCP_scenario)
 
+#         if self.epc['POSTCODE'].iloc[0] != 0:
+#             NUTS3 = 'UK' + self.epc['POSTCODE'].iloc[0].split(' ')[0]
+
         years_index = list(range(3, 36))
         HDD = pd.DataFrame(columns=years_index, index=[1])
         for year in years_index:
@@ -137,30 +140,35 @@ class Building:
             current_emission = self.epc['CO2_EMISS_CURR_PER_FLOOR_AREA_Median'].iloc[0]
         else:
             current_emission = self.epc['CO2_EMISS_CURR_PER_FLOOR_AREA'].iloc[0]
+        if self.epc['ENERGY_CONSUMPTION_CURRENT'].iloc[0] == None:
+            current_energy = self.epc['ENERGY_CONSUMPTION_CURRENT_Median'].iloc[0]
+        else:
+            current_energy = self.epc['ENERGY_CONSUMPTION_CURRENT'].iloc[0]
+            
         elec_heat = energy_use_breakdown['percentage'][0] / 100  # share of electricity for heating in UK
         elec_cool = energy_use_breakdown['percentage'][1] / 100
         fuel_heat = energy_use_breakdown['percentage'][2] / 100
-        grid_uk = emission_factor['value']  # emission factor for UK
-
+        grid = emission_factor['value']  # emission factor for UK
+        start = grid[0]
+        for i in grid.index:
+            grid[i] = grid[i]/start
+            
         # electricity usage share
         electricity_share = epc_main_fuel_mapping.loc[epc_main_fuel_mapping['epc_main_fuel'] == self.epc['MAIN_FUEL'].iloc[0]]['weight_elec'].iloc[0]
+        elec_energy = current_energy*electricity_share
+        elec_procured = elec_energy*((1+(elec_heat*(HDD.iloc[0, 0]-1)+elec_cool*(CDD.iloc[0, 0]-1))))
 
         emission = pd.Series(0, index=list(range(2018, 2051)))
 
         # assumption 2: district heating/cooling and fugitive emission not considered
         for year in years:
-            if HDD.iloc[0, year - 2018] != 0:
-                emission.iloc[year - 2018] = current_emission * (electricity_share * grid_uk[year - 2018] / grid_uk[0] * (
-                            1 + elec_heat * (HDD.iloc[0, year - 2018] - 1) + elec_cool * (CDD.iloc[0, year - 2018] - 1)) + (
-                                                                             (1 - electricity_share) * HDD.iloc[
-                                                                         0, year - 2018] / HDD.iloc[0, 2018 - 2018] * (
-                                                                                         1 + fuel_heat * (HDD.iloc[
-                                                                                                              0, year - 2018] - 1))))
-            if HDD.iloc[0, year - 2018] == 0:
-                emission.iloc[year - 2018] = current_emission * (electricity_share * grid_uk[year - 2018] / grid_uk[0] * (
-                            1 + elec_heat * (HDD.iloc[0, year - 2018] - 1) + elec_cool * (CDD.iloc[0, year - 2018] - 1)))
+            emission.iloc[year - 2018] = current_emission*(electricity_share*(((grid[year - 2018]/grid[0])
+                        *(elec_energy/elec_procured)+(1-elec_energy/elec_procured))
+                        *(1+elec_heat*(HDD.iloc[0, year-2018]-1)+elec_cool*(CDD.iloc[0, year-2018]-1)))
+                        +(1 - electricity_share)*(HDD.iloc[0, year - 2018]/HDD.iloc[0, 2018 - 2018])
+                        *(1 + fuel_heat*(HDD.iloc[0, year - 2018])))
+            
         emission = emission[:end_year-2018+1]
-        
         emission_baseline = pd.Series(current_emission)
         emission_baseline = emission_baseline.repeat(len(emission.T))
         emission_baseline.index = years 
@@ -172,24 +180,15 @@ class Building:
 
         # 3. energy projection
         # energy energy projection
-        if self.epc['ENERGY_CONSUMPTION_CURRENT'].iloc[0] == None:
-            current_energy = self.epc['ENERGY_CONSUMPTION_CURRENT_Median'].iloc[0]
-        else:
-            current_energy = self.epc['ENERGY_CONSUMPTION_CURRENT'].iloc[0]
         energy = pd.Series(0, index=list(range(2018, 2051)))
         for year in years:
-            if HDD.iloc[0, year - 2018] != 0:
-                energy.iloc[year - 2018] = current_energy * (electricity_share * grid_uk[year - 2018] / grid_uk[0] * (
-                            1 + elec_heat * (HDD.iloc[0, year - 2018] - 1) + elec_cool * (CDD.iloc[0, year - 2018] - 1)) + (
-                                                                         (1 - electricity_share) * HDD.iloc[
-                                                                     0, year - 2018] / HDD.iloc[0, 2018 - 2018] * (
-                                                                                     1 + fuel_heat * (
-                                                                                         HDD.iloc[0, year - 2018] - 1))))
-            if HDD.iloc[0, year - 2018] == 0:
-                energy.iloc[year - 2018] = current_energy * (electricity_share * grid_uk[year - 2018] / grid_uk[0] * (
-                            1 + elec_heat * (HDD.iloc[0, year - 2018] - 1) + elec_cool * (CDD.iloc[0, year - 2018] - 1)))
+            energy.iloc[year - 2018] = current_energy*(electricity_share*(((grid[year - 2018]/grid[0])
+                    *(elec_energy/elec_procured)+(1-elec_energy/elec_procured))
+                    *(1+elec_heat*(HDD.iloc[0, year-2018]-1)+elec_cool*(CDD.iloc[0, year-2018]-1)))
+                    +(1 - electricity_share)*(HDD.iloc[0, year - 2018]/HDD.iloc[0, 2018 - 2018])
+                    *(1 + fuel_heat*(HDD.iloc[0, year - 2018])))
+                                                           
         energy = energy[:end_year-2018+1]
-
         energy_baseline = pd.Series(current_energy)
         energy_baseline = energy_baseline.repeat(len(energy.T))
         energy_baseline.index = years 
