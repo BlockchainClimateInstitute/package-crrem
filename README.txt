@@ -11,8 +11,14 @@ You can either:
 1. Conduct asset-level analysis with class Building using methods VAR to calculate climate value at risk or have the option to see the stranding diagram. When initialising Building, you need to specify Building(building_details, building_price), where building_details is either building EPC's BUILDING_REFERENCE_NUMBER or a json object specifying users' own input, property_price is self-defined price of the property. 
 
 here is an example json object: 
-json = {'BUILDING_REFERENCE_NUMBER':5336094578,'PROPERTY_GROUPING':'Domestic','PROPERTY_TYPE':'House','CO2_EMISS_CURR_PER_FLOOR_AREA': 66.0,'MAIN_FUEL':'gas',
-       'ENERGY_CONSUMPTION_CURRENT':375,'TOTAL_FLOOR_AREA':101.0,'NutsCode':'UKC11'}
+json = {
+       'BUILDING_REFERENCE_NUMBER':5336094578,
+       'PROPERTY_GROUPING':'Domestic',
+       'PROPERTY_TYPE':'House',
+       'CO2_EMISS_CURR_PER_FLOOR_AREA': 66.0,
+       'MAIN_FUEL':'mains gas (not community)',
+       'ENERGY_CONSUMPTION_CURRENT':375,
+       'TOTAL_FLOOR_AREA':101.0,'NutsCode':'UKC11'}
 
 2. Conduct portfolio-level analysis with class Portfolio using VAR to calculate climate value at risk and have the option to see the plot of the number of stranding assets over time. When initialising Portfolio, you need to specify Portfolio(buildings), where buildings is a list of Building instances.
 
