@@ -57,6 +57,9 @@ class Building:
             elif type(building_details) is dict:
                 #convert row of json to dataframe row
                 self.epc = pd.DataFrame(data=building_details,index=[0])
+                #deal with wrong NUTS codes
+                if self.epc['NutsCode']=='UKK24' or 'UKK25':
+                    self.epc['NutsCode'] = 'UKK23'
         self.building_price = building_price
         self.stranding_year = None
         self.loss_vlaue = None
