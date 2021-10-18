@@ -10,7 +10,7 @@ classifiers = [
  
 setup(
   name='crrem',
-  version='0.2.2',
+  version='0.2.6',
   description='A climate value at risk calculator',
   long_description=open('README.txt').read() + '\n\n' + open('CHANGELOG.txt').read(),
   long_description_content_type='text/markdown',
@@ -20,5 +20,5 @@ setup(
   classifiers=classifiers,
   keywords='climate value at risk', 
   packages=find_packages(),
-  install_requires=['pandas','numpy','psycopg2'] 
+  install_requires=['pandas>=1.1.3','numpy>=1.19.2','psycopg2>=2.8.6'] 
 )

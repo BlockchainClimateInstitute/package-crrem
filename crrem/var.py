@@ -53,11 +53,14 @@ class Building:
             if type(building_details) is int:
                 epc = DataQ(f"""select * from public.epcsourcedata where "BUILDING_REFERENCE_NUMBER" = {building_details} """).data
                 self.epc = epc.set_index('BUILDING_REFERENCE_NUMBER')
-                self.building_price = building_price
             elif type(building_details) is dict:
-            	#deal with wrong NUTS codes
-                if self.epc['NutsCode']=='UKK24' or 'UKK25':
-                    self.epc['NutsCode'] = 'UKK23'
+                if isinstance(building_details['NutsCode'], pd.Series):
+                    if building_details['NutsCode'][0] =='UKK24' or 'UKK25':
+                        building_details['NutsCode'][0] = 'UKK23'
+                #deal with wrong NUTS codes
+                elif isinstance(building_details['NutsCode'], str):
+                    if building_details['NutsCode'] =='UKK24' or 'UKK25':
+                        building_details['NutsCode'] = 'UKK23'
                 #convert row of json to dataframe row
                 self.epc = pd.DataFrame(data=building_details,index=[0])
         self.building_price = building_price
@@ -587,3 +590,5 @@ class Portfolio:
             plt.title('Number of stranding assets over time', fontsize=25)
             plt.show()          
         return total_loss/total_price
+b = Building(2544846278,500000,crrem_data='uk_epc')
+b.VAR(Diagram=True,end_year=2050,crrem_data='uk_epc',target_temp=1.5)
